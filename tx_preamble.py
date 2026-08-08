@@ -15,17 +15,18 @@ import adi
 import time
 
 URI      = "ip:192.168.2.1"     # default Pluto USB-ethernet address
-FS       = int(1e6)             # sample rate (Hz); AD936x minimum is ~521 kHz
 LO       = int(2.4e9)           # carrier (Hz) 2.4 GHz ISM band; AD936x max is 6 GHz
-BW       = int(1e6)             # analog TX filter bandwidth; AD936x ~200 kHz .. 56 MHz
-TX_GAIN  = -20                  # dB attenuation, range -89.75 .. 0
+FS       = int(10e6)             # sample rate (Hz); AD936x minimum is ~521 kHz
+BW=FS*1.5
+TX_GAIN  = -50                  # dB attenuation, range -89.75 .. 0
 SCALE    = 2 ** 14              # 12-bit DAC full scale (~±2048)
 
 N        = 2**10                # samples per chirp (minimum sampling rate)
 S_SYNC   = 200                   # sync-word symbol value
-N_UP     = 6                    # unmodulated up-chirps
+N_LEN     = 6                    # unmodulated up-chirps and downchirps
+N_UP     = N_LEN                # unmodulated up-chirps
 N_SYNC   = 2                    # sync-word chirps
-N_DOWN   = 6                    # down-chirps
+N_DOWN   = N_LEN                # down-chirps
 # NOTE: with arbitrary window alignment a region of R chirps yields only R-1
 # fully contained dechirp slots, so N_UP = 4 leaves exactly the 3 slots the
 # receiver requires and no margin for a noisy slot. Raising N_UP and N_DOWN to
@@ -84,8 +85,8 @@ def main():
     samples = make_preamble() * SCALE
     #add a sequence of data each data is 10 blank samples and a single upchirp, repeat this sequence 10 times
 
-    data_sequence = np.concatenate( [np.zeros(30)],(make_chirp(N, True),make_chirp(N,True),make_chirp(N,True),[np.zeros(10)]) * 10)
-    samples = np.concatenate([samples, data_sequence])
+    # data_sequence = np.concatenate( [np.zeros(30)],(make_chirp(N, True),make_chirp(N,True),make_chirp(N,True),[np.zeros(10)]) * 10)
+    # samples = np.concatenate([samples, data_sequence])
     sdr.tx(samples)
 
     n_chirps = N_UP + N_SYNC + N_DOWN
